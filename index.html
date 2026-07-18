@@ -338,8 +338,10 @@ async function adminStartGame(){
 }
 async function adminGenerateEvent(){
   S.err=null; S.adminBusy=true; S.screen='loading'; S.loadMsg='次のイベントを解析中...'; render();
-  try{ await callGameAI('generate_event'); }
-  catch(e){ S.err="AI接続に問題が発生したため、代替シナリオを表示しています。（詳細: "+e.message+"）"; }
+  try{
+    const r = await callGameAI('generate_event');
+    if(r.fallbackReason) S.err="Geminiの呼び出しに失敗したため、代替シナリオを表示しています。（詳細: "+r.fallbackReason+"）";
+  }catch(e){ S.err="AI接続に問題が発生したため、代替シナリオを表示しています。（詳細: "+e.message+"）"; }
   S.meta = await fetchGameState();
   S.votes = []; S.adminBusy=false; S.screen='voting'; render();
 }
@@ -356,8 +358,10 @@ async function adminCloseVoting(){
 }
 async function adminResolve(){
   S.err=null; S.adminBusy = true; S.screen='loading'; S.loadMsg='選択の結果を演算中...'; render();
-  try{ await callGameAI('resolve'); }
-  catch(e){ S.err="AI接続に問題が発生したため、代替結果を表示しています。（詳細: "+e.message+"）"; }
+  try{
+    const r = await callGameAI('resolve');
+    if(r.fallbackReason) S.err="Geminiの呼び出しに失敗したため、代替結果を表示しています。（詳細: "+r.fallbackReason+"）";
+  }catch(e){ S.err="AI接続に問題が発生したため、代替結果を表示しています。（詳細: "+e.message+"）"; }
   S.meta = await fetchGameState();
   S.adminBusy=false; S.screen='resolution'; render();
 }
@@ -367,8 +371,10 @@ async function adminNext(){
 }
 async function adminGenerateEnding(){
   S.err=null; S.adminBusy=true; S.screen='loading'; S.loadMsg='一年戦争の結末を編纂中...'; render();
-  try{ await callGameAI('generate_ending'); }
-  catch(e){ S.err="AI接続に問題が発生したため、代替エンディングを表示しています。（詳細: "+e.message+"）"; }
+  try{
+    const r = await callGameAI('generate_ending');
+    if(r.fallbackReason) S.err="Geminiの呼び出しに失敗したため、代替エンディングを表示しています。（詳細: "+r.fallbackReason+"）";
+  }catch(e){ S.err="AI接続に問題が発生したため、代替エンディングを表示しています。（詳細: "+e.message+"）"; }
   S.meta = await fetchGameState();
   S.adminBusy=false; S.screen='ending'; render();
 }
@@ -395,10 +401,11 @@ async function soloStartGame(){
 async function soloGenerateEvent(){
   S.err=null; S.meta.phase='loading'; S.screen='loading'; S.loadMsg='次のイベントを解析中...'; render();
   try{
-    const { event } = await callGameAI('solo_generate_event', {
+    const r = await callGameAI('solo_generate_event', {
       player: S.myPlayer, turn: S.meta.turn, fed: S.meta.fed, zeon: S.meta.zeon, guild: S.meta.guild, history: S.meta.history
     });
-    S.meta.currentEvent = event;
+    S.meta.currentEvent = r.event;
+    if(r.fallbackReason) S.err="Geminiの呼び出しに失敗したため、代替シナリオを表示しています。（詳細: "+r.fallbackReason+"）";
   }catch(e){ S.meta.currentEvent = fallbackEvent(); S.err="AI接続に問題が発生したため、代替シナリオを表示しています。（詳細: "+e.message+"）"; }
   S.meta.phase='voting'; S.screen='soloVoting'; render();
 }
@@ -413,6 +420,7 @@ async function soloChoose(idx){
       history: S.meta.history, currentEvent: S.meta.currentEvent, chosenIdx: idx
     });
     res = r.resolution;
+    if(r.fallbackReason) S.err="Geminiの呼び出しに失敗したため、代替結果を表示しています。（詳細: "+r.fallbackReason+"）";
   }catch(e){ res = fallbackResolution(chosen.label); S.err="AI接続に問題が発生したため、代替結果を表示しています。（詳細: "+e.message+"）"; }
   S.meta.fed = Math.max(0, Math.min(100, S.meta.fed + (res.fedGaugeDelta||0)));
   S.meta.zeon = Math.max(0, Math.min(100, S.meta.zeon + (res.zeonGaugeDelta||0)));
@@ -433,6 +441,7 @@ async function soloGenerateEnding(){
       player: S.myPlayer, fed: S.meta.fed, zeon: S.meta.zeon, guild: S.meta.guild, history: S.meta.history
     });
     ending = r.ending;
+    if(r.fallbackReason) S.err="Geminiの呼び出しに失敗したため、代替エンディングを表示しています。（詳細: "+r.fallbackReason+"）";
   }catch(e){ ending = fallbackEnding(S.meta.fed, S.meta.zeon, [S.myPlayer]); S.err="AI接続に問題が発生したため、代替エンディングを表示しています。（詳細: "+e.message+"）"; }
   S.meta.ending = ending; S.meta.endingRoster = [S.myPlayer]; S.meta.phase='ending';
   S.screen='ending'; render();
