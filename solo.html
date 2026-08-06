@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M.S.G. — ONE YEAR WAR SIMULATOR (SOLO)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05070b; --panel:#0b121d; --panel2:#0f1a29; --line:#1c2b3d;
+  --fed:#2fd8ff; --fed-dim:#134a5c;
+  --zeon:#ff5a3c; --zeon-dim:#5c2013;
+  --char:#ff2f8f; --char-dim:#5c1338;
+  --ae:#d9b64e; --ae-dim:#4d3f14;
+  --guild:#3ddc97; --guild-dim:#155c3f;
+  --amber:#ffd23f; --text:#dbe6f0; --muted:#6f8296;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:radial-gradient(ellipse at 20% -10%,#0c2233 0%,transparent 55%),
+             radial-gradient(ellipse at 100% 110%,#2a0f10 0%,transparent 45%), var(--bg);
+  color:var(--text); font-family:'Noto Sans JP',sans-serif; min-height:100vh;
+}
+.hexbg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.3;
+  background-image:linear-gradient(30deg,#0d1826 12%,transparent 12.5%,transparent 87%,#0d1826 87.5%,#0d1826),
+    linear-gradient(150deg,#0d1826 12%,transparent 12.5%,transparent 87%,#0d1826 87.5%,#0d1826),
+    linear-gradient(30deg,#0d1826 12%,transparent 12.5%,transparent 87%,#0d1826 87.5%,#0d1826),
+    linear-gradient(150deg,#0d1826 12%,transparent 12.5%,transparent 87%,#0d1826 87.5%,#0d1826);
+  background-size:44px 76px; background-position:0 0,0 0,22px 38px,22px 38px;}
+#root{position:relative;z-index:2;max-width:720px;margin:0 auto;padding:16px 14px 60px;}
+.brand{font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;letter-spacing:1.5px;color:var(--amber);text-align:center;}
+.brand span{color:var(--muted);font-weight:500;font-size:10px;letter-spacing:2px;display:block;margin-top:3px;}
+.topbar{margin-bottom:14px;}
+.turnrow{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:8px;}
+.turndot{width:8px;height:8px;background:var(--line);transform:rotate(45deg);}
+.turndot.done{background:var(--amber);box-shadow:0 0 6px var(--amber);}
+.turndot.now{background:var(--text);box-shadow:0 0 8px var(--text);animation:pulse 1.2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.turnlabel{font-family:'Orbitron';font-size:10.5px;color:var(--muted);letter-spacing:1px;}
+
+.gauges{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+.gaugebox{background:var(--panel);border:1px solid var(--line);padding:8px 9px;}
+.gaugebox.fed{border-left:3px solid var(--fed);} .gaugebox.zeon{border-left:3px solid var(--zeon);} .gaugebox.guild{border-left:3px solid var(--guild);}
+.gaugehead{display:flex;flex-direction:column;font-family:'Orbitron';font-size:9px;letter-spacing:.3px;color:var(--muted);margin-bottom:5px;}
+.gaugehead b{font-size:16px;font-family:'Orbitron';margin-top:1px;}
+.gaugebox.fed .gaugehead b{color:var(--fed);} .gaugebox.zeon .gaugehead b{color:var(--zeon);} .gaugebox.guild .gaugehead b{color:var(--guild);}
+.gaugetrack{height:8px;background:#050a10;border:1px solid var(--line);}
+.gaugefill{height:100%;transition:width .9s cubic-bezier(.2,.8,.2,1);}
+.gaugebox.fed .gaugefill{background:linear-gradient(90deg,var(--fed-dim),var(--fed));box-shadow:0 0 8px var(--fed);}
+.gaugebox.zeon .gaugefill{background:linear-gradient(90deg,var(--zeon-dim),var(--zeon));box-shadow:0 0 8px var(--zeon);}
+.gaugebox.guild .gaugefill{background:linear-gradient(90deg,var(--guild-dim),var(--guild));box-shadow:0 0 8px var(--guild);}
+
+.panel{background:var(--panel);border:1px solid var(--line);padding:18px 16px;margin-bottom:14px;position:relative;}
+.panel:before{content:"";position:absolute;top:0;left:0;width:18px;height:18px;border-top:2px solid var(--amber);border-left:2px solid var(--amber);opacity:.6;}
+.panel:after{content:"";position:absolute;bottom:0;right:0;width:18px;height:18px;border-bottom:2px solid var(--amber);border-right:2px solid var(--amber);opacity:.6;}
+h1.evt{font-family:'Orbitron';font-size:17px;color:var(--amber);letter-spacing:.5px;margin:0 0 10px;}
+.narration{font-size:15px;line-height:1.85;white-space:pre-wrap;}
+.title-hero{font-family:'Orbitron';font-size:21px;color:var(--amber);text-align:center;letter-spacing:.5px;margin-bottom:6px;}
+.sub-hero{text-align:center;color:var(--muted);font-size:12px;margin-bottom:18px;letter-spacing:.5px;}
+
+.choices{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+.choice{background:var(--panel2);border:1px solid var(--line);padding:13px 15px;cursor:pointer;text-align:left;color:var(--text);font-family:inherit;width:100%;transition:.15s;}
+.choice:active{transform:scale(.98);}
+.choice:hover{border-color:var(--amber);}
+.choice .clabel{font-weight:700;font-size:14.5px;}
+.choice .cdesc{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.6;}
+
+.btn{font-family:'Orbitron';font-size:12px;letter-spacing:1px;background:transparent;border:1px solid var(--amber);color:var(--amber);padding:12px 20px;cursor:pointer;width:100%;}
+.btn:active{background:var(--amber);color:#1a1400;}
+.btn.secondary{border-color:var(--muted);color:var(--muted);font-size:11px;padding:9px 14px;}
+.btnrow{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+.btnrow .btn{flex:1;min-width:140px;}
+
+.big2{display:flex;flex-direction:column;gap:12px;margin-top:10px;}
+.bigchoice{background:var(--panel2);border:1px solid var(--line);padding:22px 18px;font-family:'Orbitron';font-size:14px;letter-spacing:1px;color:var(--text);cursor:pointer;text-align:center;}
+.bigchoice:active{border-color:var(--amber);}
+
+.rolecard{background:var(--panel2);border:1px solid var(--line);padding:16px;text-align:center;margin-top:12px;}
+.rolecard.fed{border-left:4px solid var(--fed);} .rolecard.zeon{border-left:4px solid var(--zeon);}
+.rolecard.char{border-left:4px solid var(--char);} .rolecard.ae{border-left:4px solid var(--ae);} .rolecard.neutral{border-left:4px solid var(--guild);}
+.rolefaction{font-family:'Orbitron';font-size:10.5px;letter-spacing:1.5px;color:var(--muted);}
+.roletitle{font-size:18px;font-weight:900;margin:6px 0;}
+.rolecard.fed .roletitle{color:var(--fed);} .rolecard.zeon .roletitle{color:var(--zeon);}
+.rolecard.char .roletitle{color:var(--char);} .rolecard.ae .roletitle{color:var(--ae);} .rolecard.neutral .roletitle{color:var(--guild);}
+.roleflavor{font-size:12px;color:var(--muted);line-height:1.7;margin-top:8px;}
+
+.chip{font-family:'Orbitron';font-size:9px;letter-spacing:1px;padding:2px 7px;border-radius:2px;color:var(--amber);border:1px solid var(--amber);}
+
+.loadwrap{text-align:center;padding:50px 20px;}
+.loader{width:46px;height:46px;margin:0 auto 18px;border:2px solid var(--line);border-top:2px solid var(--amber);border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loadmsg{font-family:'Orbitron';font-size:11.5px;color:var(--muted);letter-spacing:1px;}
+
+.log{max-height:150px;overflow-y:auto;font-size:11.5px;color:var(--muted);border-top:1px dashed var(--line);margin-top:14px;padding-top:8px;}
+.log div{margin-bottom:5px;padding-left:8px;border-left:2px solid var(--line);}
+.log b{color:var(--text);}
+
+.evalcard{background:var(--panel2);border:1px solid var(--line);padding:11px 13px;display:flex;gap:12px;align-items:center;margin-bottom:7px;}
+.evalcard.fed{border-left:3px solid var(--fed);} .evalcard.zeon{border-left:3px solid var(--zeon);}
+.evalcard.char{border-left:3px solid var(--char);} .evalcard.ae{border-left:3px solid var(--ae);} .evalcard.neutral{border-left:3px solid var(--guild);}
+.evalscore{font-family:'Orbitron';font-size:24px;font-weight:900;width:36px;text-align:center;color:var(--amber);}
+.evalname{font-weight:700;font-size:13px;margin-bottom:2px;}
+.evalcomment{font-size:11.5px;color:var(--muted);line-height:1.6;}
+
+.errbox{border:1px solid var(--zeon);color:var(--zeon);padding:8px 12px;font-size:11px;margin-top:10px;}
+.field{width:100%;background:#050a10;border:1px solid var(--line);color:var(--text);padding:12px;font-family:inherit;font-size:15px;margin-top:10px;}
+.field:focus{outline:none;border-color:var(--amber);}
+.hint{font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.6;}
+.setupbox{background:var(--panel2);border:1px solid var(--zeon);padding:14px;font-size:12px;line-height:1.8;margin-bottom:16px;}
+.setupbox b{color:var(--amber);}
+</style>
+</head>
+<body>
+<div class="hexbg"></div>
+<div id="root"></div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+/* ============================================================
+   ここだけ書き換えてください（SETUP.md 参照）
+   ※ 1人用でもAI呼び出し(Edge Function)のために接続情報が必要です
+   ============================================================ */
+const SUPABASE_URL = "https://miphwsnsaheowguooktm.supabase.co";        // 例: https://xxxxx.supabase.co
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pcGh3c25zYWhlb3dndW9va3RtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzMjA4NzgsImV4cCI6MjA5OTg5Njg3OH0._UVpHNOmW-q53UQWAUzfZ546oYNM2-I7FZwNjQjkwyE";
+/* ============================================================ */
+
+const NOT_CONFIGURED = SUPABASE_URL.includes("YOUR_SUPABASE_URL") || SUPABASE_ANON_KEY.includes("YOUR_SUPABASE_ANON_KEY");
+const supabase = NOT_CONFIGURED ? null : createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const FED_TITLES  = ["元連邦軍属 傭兵隊長","元連邦軍 通信士上がりの操縦士","連邦に伝手を持つ交渉役","連邦寄りの物資調達係","元連邦軍 整備士"];
+const ZEON_TITLES = ["元ジオン兵 整備主任","元ジオン公国軍属 戦術顧問","ジオン残留将校と伝手を持つ斡旋屋","ジオン系コロニー出身の情報屋","元ジオン軍 操縦士"];
+const NEUTRAL_TITLES = ["ジャンク屋ギルド長","廃品回収船 船長","独立警備隊 情報屋","流れの凄腕パイロット","コロニー難民支援ネットワーク代表","中立コロニー 交易商","サイド6 自警団長"];
+const CHAR_TITLES = ["表向きは一般隊員、実はシャア個人の密偵","シャア個人に恩義があるという古参"];
+const AE_TITLES   = ["AE社と裏で通じる兵器ブローカー","AE社から資金提供を受ける技術屋"];
+const FLAVOR = {
+  fed:"心情としては連邦寄り。ギルドの一員である以上は中立を装うが、連邦側に肩入れしたくなる場面もあるだろう。",
+  zeon:"心情としてはジオン寄り。ギルドの一員である以上は中立を装うが、ジオン側に肩入れしたくなる場面もあるだろう。",
+  neutral:"生粋のノンポリ、あるいは徹底したリアリスト。どちらにも肩入れせず、ギルドと自分たちの生存を最優先に考える。",
+  char:"表向きは中立なギルドの一員だが、実際はシャア個人に密かな忠誠を誓っている。ギルド全体の利益より、彼の思惑を優先する場面があってもいい。",
+  ae:"表向きは中立なギルドの一員だが、実際はAE社と裏で通じている。戦争そのものより、自分（と会社）の利益を優先する場面があってもいい。"
+};
+const FACTION_LABEL = {fed:"ギルド(連邦寄り)",zeon:"ギルド(ジオン寄り)",neutral:"ギルド(中立)",char:"ギルド(シャア派)",ae:"ギルド(AE社系)"};
+const WAR_PERIODS = ["開戦","コロニー落とし前後","緒戦、ジオン優勢","地球降下作戦","膠着する戦線","連邦の反攻作戦","新型兵器の投入","宇宙要塞攻防戦","終戦前夜","最終決戦"];
+const TOTAL_TURNS = 10;
+
+/* ---------- Edge Function呼び出し(AIのみ。DBは使わない) ---------- */
+async function callGameAI(action, payload){
+  const { data, error } = await supabase.functions.invoke('game-ai', { body: { action, ...(payload||{}) } });
+  if(error) throw new Error(error.message || String(error));
+  if(!data || !data.ok) throw new Error((data && data.error) || "AI呼び出しに失敗しました");
+  return data;
+}
+
+function historyText(history){
+  if(!history || history.length===0) return "（まだ何も起きていない。開戦直前。）";
+  return history.map(h=>`第${h.turn}ターン「${h.title}」→ 選択:${h.chosenLabel} → ${h.summary}`).join("\n");
+}
+function fallbackEvent(){
+  return {title:"漂流する避難民",narration:"サイド7近郊で、連邦・ジオン双方の民間人を乗せた漂流船を発見した。放っておけば全員が命を落とす。",
+    choices:[
+      {label:"両陣営の民間人を全員救助する",description:"中立を掲げるギルドとして筋を通す"},
+      {label:"連邦系の乗員だけを優先的に救助する",description:"仲間内の連邦寄りの声に応える"},
+      {label:"見なかったことにして立ち去る",description:"巻き込まれるリスクを避ける"},
+      {label:"漂流船ごと第三勢力に売り渡す",description:"非情だが実利は大きい賭けに出る"}
+    ]};
+}
+function fallbackResolution(chosenLabel){
+  const fd = Math.floor(Math.random()*10)-5, zd = Math.floor(Math.random()*10)-5, gd = Math.floor(Math.random()*20)-8;
+  return {resolutionText:`「${chosenLabel}」という決断に、ギルドの中でも反応は割れた。`, fedGaugeDelta:fd, zeonGaugeDelta:zd, guildGaugeDelta:gd, summary:`${chosenLabel}の余波でギルド内の空気が揺れる`};
+}
+function fallbackEnding(fed, zeon, roster){
+  const fedWin = fed >= zeon;
+  return {
+    endingTitle: fedWin ? "地球は静寂を取り戻した" : "宇宙世紀は新たな均衡へ",
+    endingNarration: "サイド6に根を張ったこの小さなギルドは、内輪の立場の違いを抱えながらも、最後まで解散せずに生き延びた。",
+    evaluations: roster.map(()=>({score:"B", comment:"役割を果たした。"}))
+  };
+}
+
+/* ---------- role assignment ---------- */
+function assignRole(){
+  const roll = Math.random();
+  let faction;
+  if(roll < 0.05) faction='char';
+  else if(roll < 0.10) faction='ae';
+  else{
+    const opts = ['fed','zeon','neutral'];
+    faction = opts[Math.floor(Math.random()*opts.length)];
+  }
+  const pool = {fed:FED_TITLES, zeon:ZEON_TITLES, char:CHAR_TITLES, ae:AE_TITLES, neutral:NEUTRAL_TITLES}[faction];
+  const title = pool[Math.floor(Math.random()*pool.length)];
+  return {faction, title};
+}
+function uuid(){
+  if(crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c=>{
+    const r = Math.random()*16|0, v = c==='x'?r:(r&0x3|0x8); return v.toString(16);
+  });
+}
+
+/* ---------- app state ---------- */
+let S = { screen:"landing", myId:null, myPlayer:null, meta:null, err:null, nameInput:"" };
+const root = document.getElementById('root');
+function render(){ root.innerHTML = views[S.screen](); attach(); }
+
+/* ---------- solo game flow ---------- */
+async function soloRegister(){
+  const name = S.nameInput.trim();
+  if(!name) return;
+  S.screen="loading"; S.loadMsg="役職を割り当て中..."; render();
+  const {faction,title} = assignRole();
+  S.myId = 'solo-'+uuid(); S.myPlayer = {id:S.myId, name, faction, title};
+  S.screen="soloRoleReveal"; render();
+}
+async function soloStartGame(){
+  S.meta = { phase:'loading', turn:1, fed:50, zeon:50, guild:65, currentEvent:null, lastResolution:null, ending:null, history:[] };
+  await soloGenerateEvent();
+}
+async function soloGenerateEvent(){
+  S.err=null; S.meta.phase='loading'; S.screen='loading'; S.loadMsg='次のイベントを解析中...'; render();
+  try{
+    const r = await callGameAI('solo_generate_event', {
+      player: S.myPlayer, turn: S.meta.turn, fed: S.meta.fed, zeon: S.meta.zeon, guild: S.meta.guild, history: S.meta.history
+    });
+    S.meta.currentEvent = r.event;
+    if(r.fallbackReason) S.err="Geminiの呼び出しに失敗したため、代替シナリオを表示しています。（詳細: "+r.fallbackReason+"）";
+  }catch(e){ S.meta.currentEvent = fallbackEvent(); S.err="AI接続に問題が発生したため、代替シナリオを表示しています。（詳細: "+e.message+"）"; }
+  S.meta.phase='voting'; S.screen='soloVoting'; render();
+}
+async function soloChoose(idx){
+  S.meta.chosenIdx = idx;
+  S.err=null; S.meta.phase='loading'; S.screen='loading'; S.loadMsg='選択の結果を演算中...'; render();
+  const chosen = S.meta.currentEvent.choices[idx];
+  let res;
+  try{
+    const r = await callGameAI('solo_resolve', {
+      turn: S.meta.turn, fed: S.meta.fed, zeon: S.meta.zeon, guild: S.meta.guild,
+      history: S.meta.history, currentEvent: S.meta.currentEvent, chosenIdx: idx
+    });
+    res = r.resolution;
+    if(r.fallbackReason) S.err="Geminiの呼び出しに失敗したため、代替結果を表示しています。（詳細: "+r.fallbackReason+"）";
+  }catch(e){ res = fallbackResolution(chosen.label); S.err="AI接続に問題が発生したため、代替結果を表示しています。（詳細: "+e.message+"）"; }
+  S.meta.fed = Math.max(0, Math.min(100, S.meta.fed + (res.fedGaugeDelta||0)));
+  S.meta.zeon = Math.max(0, Math.min(100, S.meta.zeon + (res.zeonGaugeDelta||0)));
+  S.meta.guild = Math.max(0, Math.min(100, S.meta.guild + (res.guildGaugeDelta||0)));
+  S.meta.history.push({turn:S.meta.turn, title:S.meta.currentEvent.title, summary:res.summary||"", chosenLabel:chosen.label});
+  S.meta.lastResolution = res; S.meta.phase='resolution';
+  S.screen='resolution'; render();
+}
+async function soloNext(){
+  if(S.meta.turn >= TOTAL_TURNS){ await soloGenerateEnding(); }
+  else{ S.meta.turn++; await soloGenerateEvent(); }
+}
+async function soloGenerateEnding(){
+  S.err=null; S.meta.phase='loading'; S.screen='loading'; S.loadMsg='一年戦争の結末を編纂中...'; render();
+  let ending;
+  try{
+    const r = await callGameAI('solo_generate_ending', {
+      player: S.myPlayer, fed: S.meta.fed, zeon: S.meta.zeon, guild: S.meta.guild, history: S.meta.history
+    });
+    ending = r.ending;
+    if(r.fallbackReason) S.err="Geminiの呼び出しに失敗したため、代替エンディングを表示しています。（詳細: "+r.fallbackReason+"）";
+  }catch(e){ ending = fallbackEnding(S.meta.fed, S.meta.zeon, [S.myPlayer]); S.err="AI接続に問題が発生したため、代替エンディングを表示しています。（詳細: "+e.message+"）"; }
+  S.meta.ending = ending; S.meta.endingRoster = [S.myPlayer]; S.meta.phase='ending';
+  S.screen='ending'; render();
+}
+function soloReset(){
+  S = { screen:"landing", myId:null, myPlayer:null, meta:null, err:null, nameInput:"" };
+  render();
+}
+
+/* ---------- shared UI blocks ---------- */
+function gaugeBlock(fed, zeon, guild){
+  guild = guild==null ? 20 : guild;
+  return `<div class="gauges">
+    <div class="gaugebox fed"><div class="gaugehead"><span>連邦</span><b>${fed}%</b></div><div class="gaugetrack"><div class="gaugefill" style="width:${fed}%"></div></div></div>
+    <div class="gaugebox zeon"><div class="gaugehead"><span>ジオン</span><b>${zeon}%</b></div><div class="gaugetrack"><div class="gaugefill" style="width:${zeon}%"></div></div></div>
+    <div class="gaugebox guild"><div class="gaugehead"><span>ギルド結束度</span><b>${guild}%</b></div><div class="gaugetrack"><div class="gaugefill" style="width:${guild}%"></div></div></div>
+  </div>`;
+}
+function topBar(turn){
+  let dots="";
+  for(let i=1;i<=TOTAL_TURNS;i++){ dots += `<div class="turndot ${i<turn?'done':(i===turn?'now':'')}"></div>`; }
+  return `<div class="topbar">
+    <div class="brand">M.S.G. — ONE YEAR WAR SIMULATOR<span>U.C.0079 CAMPAIGN LOG (SOLO)</span></div>
+    <div class="turnrow"><span class="turnlabel">LOG ${String(Math.min(turn,TOTAL_TURNS)).padStart(2,'0')}/${TOTAL_TURNS}</span>${dots}</div>
+  </div>`;
+}
+function eraBadge(turn){
+  const period = WAR_PERIODS[Math.min(turn,TOTAL_TURNS)-1];
+  if(!period) return "";
+  return `<div class="chip" style="display:inline-block;margin-bottom:8px;">戦局: ${period}</div>`;
+}
+function logBlock(history){
+  if(!history || history.length===0) return "";
+  const rows = history.slice().reverse().map(h=>`<div><b>T${h.turn} ${h.title}</b> — ${h.chosenLabel}。${h.summary}</div>`).join("");
+  return `<div class="log">${rows}</div>`;
+}
+function errBlock(){ return S.err ? `<div class="errbox">${S.err}</div>` : ""; }
+
+/* ---------- views ---------- */
+const views = {
+  landing: ()=>{
+    if(NOT_CONFIGURED){
+      return `<div class="topbar"><div class="brand">M.S.G. — ONE YEAR WAR SIMULATOR<span>U.C.0079 CAMPAIGN LOG (SOLO)</span></div></div>
+      <div class="panel"><div class="title-hero">設定が必要です</div>
+      <div class="setupbox">solo.html 内の <b>SUPABASE_URL</b> と <b>SUPABASE_ANON_KEY</b> がまだ書き換えられていません。SETUP.md の手順に沿って、Supabaseプロジェクトの値を入力してください。</div>
+      </div>`;
+    }
+    return `
+    <div class="topbar"><div class="brand">M.S.G. — ONE YEAR WAR SIMULATOR<span>U.C.0079 CAMPAIGN LOG (SOLO)</span></div></div>
+    <div class="panel">
+      <div class="title-hero">一年戦争シミュレーター（1人用）</div>
+      <div class="sub-hero">あなた1人で全10ターンの意思決定を行い、一年戦争を進めます。サイド6独立勢力「ジャンク屋ギルド」の一員として、連邦寄り・ジオン寄り・中立などの立場が自動で割り当てられます</div>
+      <div class="btnrow"><button class="btn" id="startBtn">始める ▶</button></div>
+      <div class="hint">複数人でワイワイ遊びたい場合は multi.html を使ってください。</div>
+    </div>`;
+  },
+
+  nameEntry: ()=>`
+    <div class="topbar"><div class="brand">M.S.G. — ONE YEAR WAR SIMULATOR<span>U.C.0079 CAMPAIGN LOG (SOLO)</span></div></div>
+    <div class="panel">
+      <div class="title-hero">参加登録</div>
+      <div class="sub-hero">名前を入力してください。役職は自動で割り当てられます</div>
+      <input type="text" class="field" id="nameField" placeholder="あなたの名前" value="${S.nameInput}" maxlength="16">
+      <div class="btnrow"><button class="btn" id="submitName">登録する ▶</button></div>
+    </div>`,
+
+  loading: ()=>`
+    ${S.meta?topBar(S.meta.turn):''}${S.meta?gaugeBlock(S.meta.fed,S.meta.zeon,S.meta.guild):''}
+    <div class="panel"><div class="loadwrap"><div class="loader"></div><div class="loadmsg">${S.loadMsg||"読み込み中..."}</div></div></div>`,
+
+  soloRoleReveal: ()=>`
+    <div class="topbar"><div class="brand">M.S.G. — ONE YEAR WAR SIMULATOR<span>U.C.0079 CAMPAIGN LOG (SOLO)</span></div></div>
+    <div class="panel">
+      <div class="title-hero">登録完了</div>
+      <div class="sub-hero">あなた1人で全10ターンの意思決定を行い、一年戦争を進めます</div>
+      <div class="rolecard ${S.myPlayer.faction}">
+        <div class="rolefaction">${FACTION_LABEL[S.myPlayer.faction]}</div>
+        <div class="roletitle">${S.myPlayer.title}</div>
+        <div class="roleflavor">${FLAVOR[S.myPlayer.faction]}</div>
+      </div>
+      <div class="btnrow"><button class="btn" id="soloStartBtn">作戦開始 ▶</button></div>
+    </div>`,
+
+  soloVoting: ()=>{
+    const ev = S.meta.currentEvent;
+    return `${topBar(S.meta.turn)}${gaugeBlock(S.meta.fed,S.meta.zeon,S.meta.guild)}
+    <div class="panel">
+      ${eraBadge(S.meta.turn)}
+      <h1 class="evt">${ev.title}</h1>
+      <div class="narration">${ev.narration}</div>
+      ${errBlock()}
+      <div class="choices">
+        ${ev.choices.map((c,i)=>`
+          <button class="choice" data-solovote="${i}">
+            <div class="clabel">${c.label}</div>
+            <div class="cdesc">${c.description}</div>
+          </button>`).join("")}
+      </div>
+    </div>`;
+  },
+
+  resolution: ()=>`
+    ${topBar(S.meta.turn)}${gaugeBlock(S.meta.fed,S.meta.zeon,S.meta.guild)}
+    <div class="panel">
+      <h1 class="evt">結果報告 — 第${S.meta.turn}ターン</h1>
+      <div class="narration">${S.meta.lastResolution.resolutionText}</div>
+      ${errBlock()}
+      <div style="margin-top:12px;font-size:12px;color:var(--muted);">
+        連邦: <b style="color:var(--fed)">${S.meta.lastResolution.fedGaugeDelta>=0?'+':''}${S.meta.lastResolution.fedGaugeDelta}</b> ／
+        ジオン: <b style="color:var(--zeon)">${S.meta.lastResolution.zeonGaugeDelta>=0?'+':''}${S.meta.lastResolution.zeonGaugeDelta}</b> ／
+        結束度: <b style="color:var(--guild)">${(S.meta.lastResolution.guildGaugeDelta||0)>=0?'+':''}${S.meta.lastResolution.guildGaugeDelta||0}</b>
+      </div>
+      ${logBlock(S.meta.history)}
+      <div class="btnrow"><button class="btn" id="nextTurnBtn">${S.meta.turn>=TOTAL_TURNS?'終戦処理へ ▶':'次のイベントへ ▶'}</button></div>
+    </div>`,
+
+  ending: ()=>{
+    const roster = S.meta.endingRoster || [S.myPlayer];
+    return `${topBar(TOTAL_TURNS)}${gaugeBlock(S.meta.fed,S.meta.zeon,S.meta.guild)}
+    <div class="panel">
+      <div class="title-hero">${S.meta.ending.endingTitle}</div>
+      <div class="narration" style="text-align:center;">${S.meta.ending.endingNarration}</div>
+      ${errBlock()}
+    </div>
+    <div class="panel">
+      <h1 class="evt">評価</h1>
+      ${roster.map((p,i)=>`
+        <div class="evalcard ${p.faction}">
+          <div class="evalscore">${S.meta.ending.evaluations[i] ? S.meta.ending.evaluations[i].score : '-'}</div>
+          <div>
+            <div class="evalname">${p.name} — ${p.title}</div>
+            <div class="evalcomment">${S.meta.ending.evaluations[i] ? S.meta.ending.evaluations[i].comment : ''}</div>
+          </div>
+        </div>`).join("")}
+      ${logBlock(S.meta.history)}
+      <div class="btnrow"><button class="btn secondary" id="soloResetBtn">もう一度1人でプレイする</button></div>
+    </div>`;
+  },
+};
+
+/* ---------- wiring ---------- */
+function attach(){
+  if(S.screen==="landing"){
+    if(NOT_CONFIGURED) return;
+    const b = document.getElementById('startBtn');
+    if(b) b.addEventListener('click', ()=>{ S.screen='nameEntry'; render(); });
+  }
+  if(S.screen==="nameEntry"){
+    const f = document.getElementById('nameField');
+    f.addEventListener('input', e=>{ S.nameInput = e.target.value; });
+    f.addEventListener('keydown', e=>{ if(e.key==='Enter') soloRegister(); });
+    document.getElementById('submitName').addEventListener('click', soloRegister);
+  }
+  if(S.screen==="soloRoleReveal"){
+    document.getElementById('soloStartBtn').addEventListener('click', soloStartGame);
+  }
+  if(S.screen==="soloVoting"){
+    document.querySelectorAll('[data-solovote]').forEach(btn=>{
+      btn.addEventListener('click', e=>{ soloChoose(+e.currentTarget.dataset.solovote); });
+    });
+  }
+  if(S.screen==="resolution"){
+    document.getElementById('nextTurnBtn').addEventListener('click', soloNext);
+  }
+  if(S.screen==="ending"){
+    document.getElementById('soloResetBtn').addEventListener('click', soloReset);
+  }
+}
+
+render();
+</script>
+</body>
+</html>
