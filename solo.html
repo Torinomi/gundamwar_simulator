@@ -123,8 +123,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
    ここだけ書き換えてください（SETUP.md 参照）
    ※ 1人用でもAI呼び出し(Edge Function)のために接続情報が必要です
    ============================================================ */
-const SUPABASE_URL = "https://miphwsnsaheowguooktm.supabase.co";        // 例: https://xxxxx.supabase.co
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pcGh3c25zYWhlb3dndW9va3RtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzMjA4NzgsImV4cCI6MjA5OTg5Njg3OH0._UVpHNOmW-q53UQWAUzfZ546oYNM2-I7FZwNjQjkwyE";
+const SUPABASE_URL = "YOUR_SUPABASE_URL";        // 例: https://xxxxx.supabase.co
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 /* ============================================================ */
 
 const NOT_CONFIGURED = SUPABASE_URL.includes("YOUR_SUPABASE_URL") || SUPABASE_ANON_KEY.includes("YOUR_SUPABASE_ANON_KEY");
@@ -316,7 +316,6 @@ const views = {
       <div class="title-hero">一年戦争シミュレーター（1人用）</div>
       <div class="sub-hero">あなた1人で全10ターンの意思決定を行い、一年戦争を進めます。サイド6独立勢力「ジャンク屋ギルド」の一員として、連邦寄り・ジオン寄り・中立などの立場が自動で割り当てられます</div>
       <div class="btnrow"><button class="btn" id="startBtn">始める ▶</button></div>
-      <div class="hint">複数人でワイワイ遊びたい場合は multi.html を使ってください。</div>
     </div>`;
   },
 
